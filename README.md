@@ -35,7 +35,7 @@ The **Intel8085-Simulator** is a under work (⚠️) project, aimed at creating 
   Open the Intel-8085-Sim.sln in Visual Studio 22 and build!
 
 ## Screenshot of execution
-- ![image](https://github.com/akshatd120/Intel8085-Simulator/assets/98334833/f24e0036-d365-4806-9bd4-5c4d01b16189)
+![image](https://github.com/akshatd120/Intel8085-Simulator/assets/98334833/f24e0036-d365-4806-9bd4-5c4d01b16189)
 
 ## Contributing
 Contributions are welcome! If you'd like to add missing opcodes or improve existing features, feel free to submit a pull request.
