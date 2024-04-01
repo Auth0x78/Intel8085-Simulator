@@ -18,7 +18,7 @@ The **Intel8085-Simulator** is a under work (⚠️) project, aimed at creating 
 - **Instruction Execution**: Simulates the execution of Intel 8085 instructions.
 - **Register State**: Displays the current state of registers (accumulator, flags, etc.).
 
-## OPCODE SUPPORTED:
+## Supported Opcodes:
 - RED = <span style='color: red;'>NOT IMPLEMENTED</span>.
 - YELLOW = <span style='color: yellow;'>IMPLEMENTED but NOT TESTED</span>.
 - GREEN = <span style='color: green;'>IMPLEMENTED & TESTED</span>.
