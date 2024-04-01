@@ -19,9 +19,12 @@ The **Intel8085-Simulator** is a under work (⚠️) project, aimed at creating 
 - **Register State**: Displays the current state of registers (accumulator, flags, etc.).
 
 ## OPCODE SUPPORTED:
-- !#f03c15 Red text => NOT IMPLEMENTED
-- !#c5f015 Green text => IMPLEMENTED
-- ![opcodes-table-of-intel-8085](https://github.com/akshatd120/Intel8085-Simulator/assets/98334833/156b665e-621c-4b75-ae11-d42b9ff1e5fe)
+- RED = <span style='color: red;'>NOT IMPLEMENTED</span>.
+- YELLOW = <span style='color: yellow;'>IMPLEMENTED but NOT TESTED</span>.
+- GREEN = <span style='color: green;'>IMPLEMENTED & TESTED</span>.
+![opcodes-table-of-intel-8085 (1)](https://github.com/akshatd120/Intel8085-Simulator/assets/98334833/33feac7e-f3fc-4b49-a326-225f5c338f7f)
+
+
 
 ## Usage
 1. **Clone the Repository**:
