@@ -18,6 +18,11 @@ The **Intel8085-Simulator** is a under work (⚠️) project, aimed at creating 
 - **Instruction Execution**: Simulates the execution of Intel 8085 instructions.
 - **Register State**: Displays the current state of registers (accumulator, flags, etc.).
 
+## OPCODE SUPPORTED:
+- !#f03c15 Red text => NOT IMPLEMENTED
+- !#c5f015 Green text => IMPLEMENTED
+- ![opcodes-table-of-intel-8085](https://github.com/akshatd120/Intel8085-Simulator/assets/98334833/156b665e-621c-4b75-ae11-d42b9ff1e5fe)
+
 ## Usage
 1. **Clone the Repository**:
     ```
@@ -25,7 +30,10 @@ The **Intel8085-Simulator** is a under work (⚠️) project, aimed at creating 
     ```
 2. **Compile and Run**:
   Open the Intel-8085-Sim.sln in Visual Studio 22 and build!
-    
+
+## Screenshot of execution
+- ![image](https://github.com/akshatd120/Intel8085-Simulator/assets/98334833/f24e0036-d365-4806-9bd4-5c4d01b16189)
+
 ## Contributing
 Contributions are welcome! If you'd like to add missing opcodes or improve existing features, feel free to submit a pull request.
 
