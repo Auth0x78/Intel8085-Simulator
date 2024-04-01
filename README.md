@@ -10,8 +10,7 @@ The **Intel8085-Simulator** is a under work (⚠️) project, aimed at creating 
     - It emulates the execution of instructions step by step.
     - Registers, memory, and other components of the 8085 microprocessor are updated accordingly.
 3. **Output and Debugging**:
-    - Users can observe the state of registers, memory, and other relevant components during execution.
-    - Debugging features (such as breakpoints, step-by-step execution, and memory inspection) help identify issues.
+    - Users can observe the state of registers, memory, and other relevant components.
     - **Note**: Some opcodes may not be fully implemented yet.
 
 ## Features:
