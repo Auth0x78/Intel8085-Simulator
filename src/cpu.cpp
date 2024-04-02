@@ -38,90 +38,105 @@ void CPU::Init()
 	for (int i = 0; i < 256; ++i) 
 		m_opcodeMap.push_back([=]() { Not_Implemented(); });
 
-	//Register Appearance order (not Pairs)
-	std::vector<char> regApp =
-	{
-		'I',
-		'B', //1
-		'C', //2
-		'D', //3
-		'E', //4
-		'H', //5
-		'L', //6
-		'M', //7
-		'A', //8
-	};
-
-
 	//NOP
 	m_opcodeMap[0x0] = []() { (void)0; };
 
 	//LXI OP
-	m_opcodeMap[0x01] = [=]() { LXI('B'); }; //  
-	m_opcodeMap[0x11] = [=]() { LXI('D'); }; // +16
-	m_opcodeMap[0x21] = [=]() { LXI('H'); }; // +16
-	m_opcodeMap[0x31] = [=]() { LXI('S'); }; // +16
+	m_opcodeMap[0x01] = [=]() { LXI(REG_B, REG_C); }; 
+	m_opcodeMap[0x11] = [=]() { LXI(REG_D, REG_E); };
+	m_opcodeMap[0x21] = [=]() { LXI(REG_H, REG_L); };
+	//LXI SP
+	m_opcodeMap[0x31] = [=]() {
+		m_regc.SP = fetch();
+		m_regc.SP = ((uint16_t)fetch() << 8) | m_regc.SP;
+	};
 
 	//STAX OP
-	m_opcodeMap[0x02] = [=]() { STAX('B'); }; //
-	m_opcodeMap[0x12] = [=]() { STAX('D'); }; // +16
+	m_opcodeMap[0x02] = [=]() { STAX(REG_B, REG_C); }; //
+	m_opcodeMap[0x12] = [=]() { STAX(REG_D, REG_E); }; // +16
 
 	//INX OP
-	m_opcodeMap[0x03] = [=]() { INX('B'); };
-	m_opcodeMap[0x13] = [=]() { INX('D'); };
-	m_opcodeMap[0x23] = [=]() { INX('H'); };
-	m_opcodeMap[0x33] = [=]() { INX('S'); };
+	m_opcodeMap[0x03] = [=]() { INX(REG_B, REG_C); };
+	m_opcodeMap[0x13] = [=]() { INX(REG_D, REG_E); };
+	m_opcodeMap[0x23] = [=]() { INX(REG_H, REG_L); };
+	m_opcodeMap[0x33] = [=]() { m_regc.SP += 1; };
 
-	//INR OP (AP of a=4, d=8, nterms=8)
-	//an = a + (n - 1) d;
-	for(uint8_t n = 1; n <= 8; ++n)
-		m_opcodeMap[4 + (n - 1) * 8] = [=]() { INR(regApp[n]); };
-	//m_opcodeMap[0x04] = [=]() { INR('B'); };//4		
-	//m_opcodeMap[0x0C] = [=]() { INR('C'); };//12	+8
-	//m_opcodeMap[0x14] = [=]() { INR('D'); };//20	+8
-	//m_opcodeMap[0x1C] = [=]() { INR('E'); };//28	+8
-	//m_opcodeMap[0x24] = [=]() { INR('H'); };//36	+8
-	//m_opcodeMap[0x2C] = [=]() { INR('L'); };//44	+8
-	//m_opcodeMap[0x34] = [=]() { INR('M'); };//52	+8
-	//m_opcodeMap[0x3C] = [=]() { INR('A'); };//60	+8
+	//DCX OP
+	m_opcodeMap[0x0B] = [=]() { DCX(REG_B, REG_C); };
+	m_opcodeMap[0x0B] = [=]() { DCX(REG_D, REG_E); };
+	m_opcodeMap[0x0B] = [=]() { DCX(REG_H, REG_L); };
+	m_opcodeMap[0x0B] = [=]() { m_regc.SP -= 1; };
+
+	//DCR OP
+	m_opcodeMap[0x3D] = [=]() { DCR(REG_A); };
+	m_opcodeMap[0x05] = [=]() { DCR(REG_B); };
+	m_opcodeMap[0x0D] = [=]() { DCR(REG_C); };
+	m_opcodeMap[0x15] = [=]() { DCR(REG_D); };
+	m_opcodeMap[0x1D] = [=]() { DCR(REG_E); };
+	m_opcodeMap[0x25] = [=]() { DCR(REG_H); };
+	m_opcodeMap[0x2D] = [=]() { DCR(REG_L); };
+	//DCR M
+	m_opcodeMap[0x35] = [=]() { DCR(m_mem[PTR_M]); };
+
+	//INR OP
+	m_opcodeMap[0x3C] = [=]() { INR(REG_A); };
+	m_opcodeMap[0x04] = [=]() { INR(REG_B); };		
+	m_opcodeMap[0x0C] = [=]() { INR(REG_C); };
+	m_opcodeMap[0x14] = [=]() { INR(REG_D); };
+	m_opcodeMap[0x1C] = [=]() { INR(REG_E); };
+	m_opcodeMap[0x24] = [=]() { INR(REG_H); };
+	m_opcodeMap[0x2C] = [=]() { INR(REG_L); };
+	//INR M
+	m_opcodeMap[0x34] = [=]() { INR(m_mem[PTR_M]); };
 	
 
-	//MVI OP (AP of a=6, d=8, nterms=8)
-	//an = a + (n - 1) d;
-	for (uint8_t n = 1; n <= 8; ++n)
-		m_opcodeMap[6 + (n - 1) * 8] = [=]() { MVI(regApp[n]); };
-	//m_opcodeMap[0x06] = [=]() { MVI('B'); };
-	//m_opcodeMap[0x0E] = [=]() { MVI('C'); };
-	//m_opcodeMap[0x16] = [=]() { MVI('D'); };
-	//m_opcodeMap[0x1E] = [=]() { MVI('E'); };
-	//m_opcodeMap[0x26] = [=]() { MVI('H'); };
-	//m_opcodeMap[0x2E] = [=]() { MVI('L'); };
-	//m_opcodeMap[0x36] = [=]() { MVI('M'); };
-	//m_opcodeMap[0x3E] = [=]() { MVI('A'); };
+	//MVI OP
+	m_opcodeMap[0x3E] = [=]() { MVI(REG_A); };
+	m_opcodeMap[0x06] = [=]() { MVI(REG_B); };
+	m_opcodeMap[0x0E] = [=]() { MVI(REG_C); };
+	m_opcodeMap[0x16] = [=]() { MVI(REG_D); };
+	m_opcodeMap[0x1E] = [=]() { MVI(REG_E); };
+	m_opcodeMap[0x26] = [=]() { MVI(REG_H); };
+	m_opcodeMap[0x2E] = [=]() { MVI(REG_L); };
+	m_opcodeMap[0x36] = [=]() { MVI(m_mem[PTR_M]); };
 
-	//MOV OPERATION
-	for (uint8_t i = 0x40; i <= 0x7F; ++i) {
+	//MOV OP are from 0x40 to 0x7F, except 0x76 which is HLT
+	for (uint8_t i = 0x40; i <= 0x7F; ++i) 
+	{
 		if (i == 0x76)
 			m_opcodeMap[0x76] = [=]() { m_isHlt = true; };
 		else
 			m_opcodeMap[i] = [=]() { MOV(); };
 	}
 
-	//CMP OPERATION AP of a = 184, d = 1 nterms = 8
-	for (uint8_t n = 1; n <= 8; ++n)
-		m_opcodeMap[184 - 1 + n] = [=]() { CMP(regApp[n]); };
+	//CMP OPERATION
+	m_opcodeMap[0xBF] = [=]() { CMP(REG_A); };
+	m_opcodeMap[0xB8] = [=]() { CMP(REG_B); };
+	m_opcodeMap[0xB9] = [=]() { CMP(REG_C); };
+	m_opcodeMap[0xBA] = [=]() { CMP(REG_D); };
+	m_opcodeMap[0xBB] = [=]() { CMP(REG_E); };
+	m_opcodeMap[0xBC] = [=]() { CMP(REG_H); };
+	m_opcodeMap[0xBD] = [=]() { CMP(REG_L); };
+	m_opcodeMap[0xBE] = [=]() { CMP(m_mem[PTR_M]); };
 	
-	//POP OPERATION, AP of a = 193, d = 16, nterms = 3
-	for (uint8_t n = 1; n <= 3; ++n)
-		m_opcodeMap[193 + (n - 1) * 16] = [=]() { POP(regApp[2 * n - 1]); };
-	m_opcodeMap[0xF1] = [=]() { POP('A'); };
-  
-	//PUSH OPERATION, AP of a = 197, d = 16, nterms = 3
-	for (uint8_t n = 1; n <= 3; ++n)
-		m_opcodeMap[197 + (n - 1) * 16] = [=]() { PUSH(regApp[2 * n - 1]); };
-	m_opcodeMap[0xF5] = [=]() { PUSH('A'); };
+	//POP OPERATION
+	m_opcodeMap[0xC1] = [=]() { POP(REG_B, REG_C); };
+	m_opcodeMap[0xD1] = [=]() { POP(REG_D, REG_E); };
+	m_opcodeMap[0xE1] = [=]() { POP(REG_H, REG_L); };
+	//POP PSW
+	m_opcodeMap[0xF1] = [=]() { POP(REG_A, m_regc.FLAG); };
 
-	//TODO: JUMP OPERATIONs
+	//PUSH OPERATION
+	m_opcodeMap[0xC5] = [=]() { PUSH(REG_B, REG_C); };
+	m_opcodeMap[0xD5] = [=]() { PUSH(REG_D, REG_E); };
+	m_opcodeMap[0xE5] = [=]() { PUSH(REG_H, REG_L); };
+	//PUSH PSW
+	m_opcodeMap[0xF5] = [=]() { PUSH(REG_A, m_regc.FLAG); };
+
+	/*PCHL (JUMP which copies HL itself into PC)*/
+	m_opcodeMap[0xE9] = [=]() { m_regc.PC = PTR_M; };
+	
+	//JUMP OPERATIONs
 	m_opcodeMap[0xC2] = [=]() { JMP_CONDITIONAL(!CheckFlag(ZeroFlag)); };
 	m_opcodeMap[0xC3] = [=]() { JMP_CONDITIONAL(true); };
 	m_opcodeMap[0xCA] = [=]() { JMP_CONDITIONAL(CheckFlag(ZeroFlag)); };
@@ -135,8 +150,6 @@ void CPU::Init()
 	m_opcodeMap[0xF2] = [=]() { JMP_CONDITIONAL(!CheckFlag(SignFlag)); };
 	m_opcodeMap[0xFA] = [=]() { JMP_CONDITIONAL(CheckFlag(SignFlag)); };
 	
-	/*PCHL (JUMP which copies HL itself into PC)*/
-	m_opcodeMap[0xE9] = [=]() { m_regc.PC = PTR_M; };
 
 	/*LDA Address*/
 	m_opcodeMap[0x3A] = [=]() 
@@ -145,8 +158,10 @@ void CPU::Init()
 		mem_loc = ((uint16_t)fetch() << 8) | mem_loc;
 		REG_A = m_mem[mem_loc];
 	};
-	m_opcodeMap[0x0A] = [=]() { LDAX('B'); };
-	m_opcodeMap[0x1A] = [=]() { LDAX('D'); };
+	//LDAX OPERATIOn
+	m_opcodeMap[0x0A] = [=]() { LDAX(REG_B, REG_C); };
+	m_opcodeMap[0x1A] = [=]() { LDAX(REG_D, REG_E); };
+	
 	/*LHLD Address*/
 	m_opcodeMap[0x2A] = [=]() 
 	{ 
@@ -242,29 +257,6 @@ inline uint8_t CPU::fetch()
 	return m_mem[m_regc.PC++];
 }
 
-uint8_t* CPU::GetPointerToRegister(char reg)
-{
-	switch (reg)
-	{
-		case 'A':
-			return &m_regc.A;
-		case 'B':
-			return &m_regc.B;
-		case 'C':
-			return &m_regc.C;
-		case 'D':
-			return &m_regc.D;
-		case 'E':
-			return &m_regc.E;
-		case 'H':
-			return &m_regc.H;
-		case 'L':
-			return &m_regc.L;
-		default:
-			Logger::Log(Warning, "Unknow register: '" + std::string(&reg, 1) + "' !");
-			exit(EXIT_FAILURE);
-	}
-}
 
 void CPU::MOV()
 {
@@ -333,99 +325,35 @@ void CPU::MOV()
 			break;
 	}
 }
-
-void CPU::LXI(char reg)
+void CPU::LXI(uint8_t& highRegister, uint8_t& lowRegister)
 {
 	/*	No flags are affected
 	*	(BC, DE, HL) => {HIGH, LOW}
 	*/
-	
-	switch (reg) 
-	{
-		case 'B':
-			REG_C = fetch();
-			REG_B = fetch();
-			break;
-		case 'D':
-			REG_E = fetch();
-			REG_D = fetch();
-			break;
-		case 'H':
-			REG_L = fetch();
-			REG_H = fetch();
-			break;
-		case 'S':
-			//Fetch lower 8 bits
-			m_regc.SP = fetch();
-			//Fetch higher 8 bits
-			m_regc.SP = ((uint16_t)fetch() << 8) | m_regc.SP;
-			break;
-		default:
-			Logger::Log(Warning, "LXI " + std::string(&reg, 1) + "is not valid!");
-			exit(EXIT_FAILURE);
-	}
-	/*Load BC Register with immediate value*/
+	lowRegister = fetch();
+	highRegister = fetch();
 }
-
-void CPU::STAX(char reg)
+void CPU::STAX(uint8_t& highRegister, uint8_t& lowRegister)
 {
 	/*	No flags are affected
 	*	(BC, DE, HL) => {HIGH, LOW}
 	*/
-	switch (reg)
-	{
-		case 'B':
-			m_mem[((uint16_t)REG_B << 8) | REG_C] = REG_A;
-			break;
-		case 'D':
-			m_mem[((uint16_t)REG_D << 8) | REG_E] = REG_A;
-			break;
-		default:
-			Logger::Log(Warning, "STAX " + std::string(&reg, 1) + "is not valid!");
-			exit(EXIT_FAILURE);
-	}
+	m_mem[((uint16_t)highRegister << 8) | lowRegister] = REG_A;
 }
-
-void CPU::INX(char reg)
+void CPU::INX(uint8_t& highRegister, uint8_t& lowRegister)
 {
 	/*
 	* Increments register pair
 	* Does not affect any flags
 	* X Indicates, register pair;
-	* (BC, DE, HL) => (HIGH-LOW) 
+	* (BC, DE, HL) => (HIGH-LOW)
 	*/
-	uint16_t temp = 0;
-	switch (reg)
-	{
-		case 'B':
-			temp = ((uint16_t)REG_B << 8 | REG_C);
-			temp += 1;
-			REG_B = (temp & 0xFF00) >> 8;
-			REG_C = temp & 0x00FF;
-			break;
-		case 'D':
-			temp = ((uint16_t)REG_D << 8 | REG_E);
-			temp += 1;
-			REG_D = (temp & 0xFF00) >> 8;
-			REG_E = temp & 0x00FF;
-			break;
-		case 'H':
-			temp = ((uint16_t)REG_H << 8 | REG_L);
-			temp += 1;
-			REG_H = (temp & 0xFF00) >> 8;
-			REG_L = temp & 0x00FF;
-			break;
-		case 'S':
-			/*Increment Stack Pointer*/
-			m_regc.SP += 1;
-			break;
-		default:
-			Logger::Log(Warning, "INX " + std::string(&reg, 1) + " is not valid!");
-			exit(EXIT_FAILURE);
-	}
+	uint16_t temp = ((uint16_t)highRegister << 8 | lowRegister);
+	temp += 1;
+	highRegister = (temp & 0xFF00) >> 8;
+	lowRegister = temp & 0x00FF;
 }
-
-void CPU::INR(char reg)
+void CPU::INR(uint8_t& reg)
 {
 	/*
 	* Increments register's content
@@ -433,37 +361,44 @@ void CPU::INR(char reg)
 	* S: if result's msb is 1
 	* P: if even bits in result
 	*/
-	//Get the pointer the wanted register and then increment its content
-	uint8_t* target = nullptr;
-
-	if (reg == 'M')
-	{
-		 target = &m_mem[PTR_M];
-		*target += 1;
-	}
-	else
-	{
-		target = GetPointerToRegister(reg);
-		*target += 1;
-	}
-
+	reg += 1;
 
 	//Set all the necessary flags accordinly
-	SetSingleFlag(ZeroFlag, 0 == *target);
-	SetSingleFlag(SignFlag, (0x80 == (*target & 0x80)));
-	SetSingleFlag(ParityFlag, Parity(*target));
-	SetSingleFlag(AuxCarryFlag, (*target & 0x0F) == 0x00);
+	SetSingleFlag(ZeroFlag, 0 == reg);
+	SetSingleFlag(SignFlag, (0x80 == (reg & 0x80)));
+	SetSingleFlag(ParityFlag, Parity(reg));
+	SetSingleFlag(AuxCarryFlag, (reg & 0x0F) == 0x00);
 }
-
-void CPU::MVI(char reg)
+void CPU::DCX(uint8_t& highRegister, uint8_t& lowRegister)
 {
-	if (reg == 'M')
-		m_mem[PTR_M] = fetch();
-	else
-		*GetPointerToRegister(reg) = fetch();
+	/*
+	* Decrementss register pair
+	* Does not affect any flags
+	* X Indicates, register pair;
+	* (BC, DE, HL) => (HIGH-LOW)
+	*/
+	uint16_t temp = 0;
+	temp = ((uint16_t)highRegister << 8 | lowRegister);
+	temp -= 1;
+	REG_B = (highRegister & 0xFF00) >> 8;
+	REG_C = lowRegister & 0x00FF;
 }
+void CPU::DCR(uint8_t& reg)
+{
+	reg -= 1;
 
-void CPU::CMP(char reg)
+	//Set all the necessary flags accordinly
+	SetSingleFlag(ZeroFlag, 0 == reg);
+	SetSingleFlag(SignFlag, (0x80 == (reg & 0x80)));
+	SetSingleFlag(ParityFlag, Parity(reg));
+	
+	SetSingleFlag(AuxCarryFlag, ((reg & 0x0F) < 1));
+}
+void CPU::MVI(uint8_t& reg)
+{
+	reg = fetch();
+}
+void CPU::CMP(uint8_t& reg)
 {
 	//Compares reg with A
 	//Sub Contents of R from A, or A - r
@@ -474,29 +409,15 @@ void CPU::CMP(char reg)
 	* P: If even bits in result
 	* Aux: Borrow from bit 3 to bit 4 during sub
 	*/
-	uint8_t sub_result = 0;
-	auto setupFlags = [=](uint8_t* target)
-		{
-			SetSingleFlag(ZeroFlag, 0 == sub_result);
-			SetSingleFlag(SignFlag, (0x80 == (sub_result & 0x80)) );
-			SetSingleFlag(ParityFlag, Parity(sub_result));
-			SetSingleFlag(AuxCarryFlag, ((REG_A & 0x0F) < ((*target) & 0x0F)) );
-			SetSingleFlag(CarryFlag, REG_A < *target);	
-		};
-
-	if (reg == 'M')
-	{
-		sub_result = REG_A - m_mem[PTR_M];
-		setupFlags(&m_mem[PTR_M]);
-	}
-	else
-	{
-		sub_result = REG_A - *GetPointerToRegister(reg);
-		setupFlags(GetPointerToRegister(reg));
-	}
+	uint8_t sub_result = REG_A - reg;
+	
+	SetSingleFlag(ZeroFlag, 0 == sub_result);
+	SetSingleFlag(SignFlag, (0x80 == (sub_result & 0x80)) );
+	SetSingleFlag(ParityFlag, Parity(sub_result));
+	SetSingleFlag(AuxCarryFlag, ((REG_A & 0x0F) < (reg & 0x0F)) );
+	SetSingleFlag(CarryFlag, REG_A < reg);
 }
-
-void CPU::PUSH(char regX)
+void CPU::PUSH(uint8_t& highRegister, uint8_t& lowRegister)
 {
 	/*
 	* X => eXtended
@@ -507,37 +428,10 @@ void CPU::PUSH(char regX)
 	* Implement this for PUSH PC
 	*/
 
-	switch (regX)
-	{
-		case 'A':
-			/*PUSH PSW (A_FLAGs)*/
-			m_mem[--m_regc.SP] = *GetPointerToRegister('A');
-			m_mem[--m_regc.SP] = GetReferenceToFlags();
-			break;
-		case 'B':
-			m_mem[--m_regc.SP] = *GetPointerToRegister('B');
-			m_mem[--m_regc.SP] = *GetPointerToRegister('C');
-			break;
-		case 'D':
-			m_mem[--m_regc.SP] = *GetPointerToRegister('D');
-			m_mem[--m_regc.SP] = *GetPointerToRegister('E');
-			break;
-		case 'H':
-			m_mem[--m_regc.SP] = *GetPointerToRegister('H');
-			m_mem[--m_regc.SP] = *GetPointerToRegister('L');
-			break;
-		case 'P':
-			/*PUSH PC*/
-			m_mem[--m_regc.SP] = static_cast<uint8_t>(m_regc.PC >> 8);
-			m_mem[--m_regc.SP] = static_cast<uint8_t>(m_regc.PC & 0x00FF);
-			break;
-		default:
-			Logger::Log(Error, "Unknow PUSH: " + std::string(&regX, 1));
-			exit(EXIT_FAILURE);
-	}
+	m_mem[--m_regc.SP] = highRegister; // PUSH HIGHER byte
+	m_mem[--m_regc.SP] = lowRegister; //PUSH LOWER byte
 }
-
-void CPU::POP(char regX)
+void CPU::POP(uint8_t& highRegister, uint8_t& lowRegister)
 {
 	/*
 	* POPs the top of the stack into register pairs
@@ -546,68 +440,28 @@ void CPU::POP(char regX)
 	* post-increment to get the next byte
 	* Implement this for POP PC
 	*/
-	switch (regX)
-	{
-		case 'A':
-			/*POP PSW (A_FLAGs)*/
-			SetAllFlags(m_mem[m_regc.SP++]);
-			*GetPointerToRegister('A') = m_mem[m_regc.SP++];
-			break;
-		
-		case 'B':
-			*GetPointerToRegister('C') = m_mem[m_regc.SP++];
-			*GetPointerToRegister('B') = m_mem[m_regc.SP++];
-			break;
-		
-		case 'D':
-			*GetPointerToRegister('E') = m_mem[m_regc.SP++];
-			*GetPointerToRegister('D') = m_mem[m_regc.SP++];
-			break;
-		
-		case 'H':
-			*GetPointerToRegister('L') = m_mem[m_regc.SP++];
-			*GetPointerToRegister('H') = m_mem[m_regc.SP++];
-			break;
-		case 'P':
-			m_regc.PC = m_mem[m_regc.SP] | ((uint16_t)m_mem[m_regc.SP + 1] << 8);
-			m_regc.SP += 2;
-			break;
-		default:
-			Logger::Log(Error, "Unknow POP: " + std::string(&regX, 1));
-			exit(EXIT_FAILURE);
-	}
+	lowRegister = m_mem[m_regc.SP++];
+	highRegister = m_mem[m_regc.SP++];
 }
-
 void CPU::JMP_CONDITIONAL(bool toJump)
 {
 	/*
-	* 
 	* Sets PC to the absolute address given with JMP (conditional)
 	*/
 	if (!toJump)
 		return;
+
 	/*Fetch the lower byte of the jump address*/
 	uint16_t jmpaddr = fetch();
 	/*Fetch the high byte of the jump address and shift it up by 8*/
 	jmpaddr = ((uint16_t)fetch() << 8) | jmpaddr;
 	
+	//SET PC to the jmp address
 	m_regc.PC = jmpaddr;
 }
-
-void CPU::LDAX(char regX)
+void CPU::LDAX(uint8_t& highRegister, uint8_t& lowRegister)
 {
-	switch (regX)
-	{
-		case 'B':
-			REG_A = m_mem[((uint16_t)REG_B << 8) | REG_C];
-			break;
-		case 'D':
-			REG_A = m_mem[((uint16_t)REG_D << 8) | REG_E];
-			break;
-		default:
-			Logger::Log(Error, "LDAX " + std::string(&regX, 1) + " is not defined!");
-			break;
-	}
+	REG_A = m_mem[((uint16_t)highRegister << 8) | lowRegister];
 }
 
 bool CPU::Parity(uint8_t num)
@@ -621,7 +475,6 @@ bool CPU::Parity(uint8_t num)
 	}
 	return ((p & 0x1) == 0);
 }
-
 void CPU::Not_Implemented()
 {
 	Logger::Log(Error, "Opcode "+ std::to_string(m_currentInstr) + " not implemented!");
@@ -632,17 +485,14 @@ inline bool CPU::CheckFlag(FlagType ftype)
 {
 	return (m_regc.FLAG & (uint8_t)ftype) != 0;
 }
-
 uint8_t& CPU::GetReferenceToFlags()
 {
 	return m_regc.FLAG;
 }
-
 void CPU::SetAllFlags(uint8_t byte)
 {
 	m_regc.FLAG = byte;
 }
-
 void CPU::SetSingleFlag(FlagType ftype, bool _set)
 {
 	if (_set)

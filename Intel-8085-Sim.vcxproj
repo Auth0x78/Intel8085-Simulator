@@ -25,9 +25,9 @@
     <ClCompile Include="Src\memory.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Src\Headers\cpu.h" />
-    <ClInclude Include="Src\Headers\Logger.h" />
-    <ClInclude Include="Src\Headers\memory.h" />
+    <ClInclude Include="src\cpu.h" />
+    <ClInclude Include="src\Logger.h" />
+    <ClInclude Include="src\memory.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

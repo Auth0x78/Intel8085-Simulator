@@ -74,28 +74,28 @@ private:
 	void				Init				();
 	void				Not_Implemented		();
 	inline uint8_t		fetch				();
-	
-	//Gets pointer, pointing to r register
-	uint8_t*			GetPointerToRegister			(char reg);
 
 	//Flag related functions
 	inline bool			CheckFlag			(FlagType ftype);
 	uint8_t&			GetReferenceToFlags	();
 	void				SetAllFlags			(uint8_t word);
-	void				SetSingleFlag				(FlagType ftype, bool _set);
+	void				SetSingleFlag		(FlagType ftype, bool _set);
 
 	//Opcode Functions
 	void			MOV						();
-	void			LXI						(char reg);
-	void			STAX					(char reg);
-	void			INX						(char reg);
-	void			INR						(char reg);
-	void			MVI						(char reg);
-	void			CMP						(char reg);
-	void			PUSH					(char regX);
-	void			POP						(char regX);
+	void			LXI						(uint8_t& highRegister, uint8_t& lowRegister);
+	void			STAX					(uint8_t& highRegister, uint8_t& lowRegister);
+	void			INX						(uint8_t& highRegister, uint8_t& lowRegister);
+	void			INR						(uint8_t& reg);
+	void			DCR						(uint8_t& reg);
+	void			MVI						(uint8_t& reg);
+	void			CMP						(uint8_t& reg);
+	void			PUSH					(uint8_t& highRegister, uint8_t& lowRegister);
+	void			POP						(uint8_t& highRegister, uint8_t& lowRegister);
+	void			DCX						(uint8_t& highRegister, uint8_t& lowRegister);
+	void			LDAX					(uint8_t& highRegister, uint8_t& lowRegister);
 	void			JMP_CONDITIONAL			(bool toJump);
-	void			LDAX					(char regX);
+
 
 	//MISC.
 	bool			Parity					(uint8_t reg);
