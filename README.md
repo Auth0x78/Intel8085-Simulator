@@ -6,10 +6,12 @@ The **Intel8085-Simulator** is a under work (⚠️) project, aimed at creating 
 ## How It Works
 1. **Input Binary File**: Users or developers provide a binary file containing Intel 8085 opcodes. This file represents the program they want to simulate.
 2. **Simulation Process**:
+    - The program is loaded starting from 0x0, so all address should be with respect to 0x0
+    - The Stack is the last 1kB of memory
     - The simulator reads the binary file and interprets the opcodes.
     - It emulates the execution of instructions step by step.
     - Registers, memory, and other components of the 8085 microprocessor are updated accordingly.
-3. **Output and Debugging**:
+4. **Output and Debugging**:
     - Users can observe the state of registers, memory, and other relevant components.
     - **Note**: Some opcodes may not be fully implemented yet.
 
