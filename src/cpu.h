@@ -44,13 +44,33 @@ enum FlagType
 struct _register
 {
 	uint8_t A;
-	uint8_t B;
-	uint8_t C;
-	uint8_t D;
-	uint8_t E;
-	uint8_t H;
-	uint8_t L;
-	uint8_t FLAG; /*only lower 5 bits are used, rest upper 3 bits are */
+	union
+	{
+		struct {
+			uint8_t C;
+			uint8_t B;
+		};
+		uint16_t BC;
+	};
+	union
+	{
+		struct
+		{
+			uint8_t E;
+			uint8_t D;
+		};
+		uint16_t DE;
+	};
+	union
+	{
+		struct 
+		{
+			uint8_t L;
+			uint8_t H;
+		};
+		uint16_t HL;
+	};
+	uint8_t FLAG; /*only lower 5 bits are used, rest upper 3 bits are not used */
 	uint16_t SP;
 	uint16_t PC;
 };
@@ -83,17 +103,17 @@ private:
 
 	//Opcode Functions
 	void			MOV						();
-	void			LXI						(uint8_t& highRegister, uint8_t& lowRegister);
-	void			STAX					(uint8_t& highRegister, uint8_t& lowRegister);
-	void			INX						(uint8_t& highRegister, uint8_t& lowRegister);
+	void			LXI						(uint16_t& regPair);
+	void			STAX					(uint16_t& regPair);
+	void			INX						(uint16_t& regPair);
 	void			INR						(uint8_t& reg);
 	void			DCR						(uint8_t& reg);
 	void			MVI						(uint8_t& reg);
 	void			CMP						(uint8_t& reg);
 	void			PUSH					(uint8_t& highRegister, uint8_t& lowRegister);
 	void			POP						(uint8_t& highRegister, uint8_t& lowRegister);
-	void			DCX						(uint8_t& highRegister, uint8_t& lowRegister);
-	void			LDAX					(uint8_t& highRegister, uint8_t& lowRegister);
+	void			DCX						(uint16_t& regPair);
+	void			LDAX					(uint16_t& regPair);
 	void			JMP_CONDITIONAL			(bool toJump);
 
 

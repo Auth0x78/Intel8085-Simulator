@@ -8,6 +8,9 @@
 #define REG_H	m_regc.H
 #define REG_L	m_regc.L
 #define	PTR_M	(((uint16_t)m_regc.H << 8) | m_regc.L)
+#define REGX_BC  m_regc.BC
+#define REGX_DE  m_regc.DE
+#define REGX_HL  m_regc.HL
 
 
 void CPU::Init()
@@ -42,9 +45,9 @@ void CPU::Init()
 	m_opcodeMap[0x0] = []() { (void)0; };
 
 	//LXI OP
-	m_opcodeMap[0x01] = [=]() { LXI(REG_B, REG_C); }; 
-	m_opcodeMap[0x11] = [=]() { LXI(REG_D, REG_E); };
-	m_opcodeMap[0x21] = [=]() { LXI(REG_H, REG_L); };
+	m_opcodeMap[0x01] = [=]() { LXI(REGX_BC); }; 
+	m_opcodeMap[0x11] = [=]() { LXI(REGX_DE); };
+	m_opcodeMap[0x21] = [=]() { LXI(REGX_HL); };
 	//LXI SP
 	m_opcodeMap[0x31] = [=]() {
 		m_regc.SP = fetch();
@@ -52,19 +55,19 @@ void CPU::Init()
 	};
 
 	//STAX OP
-	m_opcodeMap[0x02] = [=]() { STAX(REG_B, REG_C); }; //
-	m_opcodeMap[0x12] = [=]() { STAX(REG_D, REG_E); }; // +16
+	m_opcodeMap[0x02] = [=]() { STAX(REGX_BC); }; //
+	m_opcodeMap[0x12] = [=]() { STAX(REGX_DE); }; // +16
 
 	//INX OP
-	m_opcodeMap[0x03] = [=]() { INX(REG_B, REG_C); };
-	m_opcodeMap[0x13] = [=]() { INX(REG_D, REG_E); };
-	m_opcodeMap[0x23] = [=]() { INX(REG_H, REG_L); };
+	m_opcodeMap[0x03] = [=]() { INX(REGX_BC); };
+	m_opcodeMap[0x13] = [=]() { INX(REGX_DE); };
+	m_opcodeMap[0x23] = [=]() { INX(REGX_HL); };
 	m_opcodeMap[0x33] = [=]() { m_regc.SP += 1; };
 
 	//DCX OP
-	m_opcodeMap[0x0B] = [=]() { DCX(REG_B, REG_C); };
-	m_opcodeMap[0x0B] = [=]() { DCX(REG_D, REG_E); };
-	m_opcodeMap[0x0B] = [=]() { DCX(REG_H, REG_L); };
+	m_opcodeMap[0x0B] = [=]() { DCX(REGX_BC); };
+	m_opcodeMap[0x0B] = [=]() { DCX(REGX_DE); };
+	m_opcodeMap[0x0B] = [=]() { DCX(REGX_HL); };
 	m_opcodeMap[0x0B] = [=]() { m_regc.SP -= 1; };
 
 	//DCR OP
@@ -159,8 +162,8 @@ void CPU::Init()
 		REG_A = m_mem[mem_loc];
 	};
 	//LDAX OPERATIOn
-	m_opcodeMap[0x0A] = [=]() { LDAX(REG_B, REG_C); };
-	m_opcodeMap[0x1A] = [=]() { LDAX(REG_D, REG_E); };
+	m_opcodeMap[0x0A] = [=]() { LDAX(REGX_BC); };
+	m_opcodeMap[0x1A] = [=]() { LDAX(REGX_DE); };
 	
 	/*LHLD Address*/
 	m_opcodeMap[0x2A] = [=]() 
@@ -325,22 +328,24 @@ void CPU::MOV()
 			break;
 	}
 }
-void CPU::LXI(uint8_t& highRegister, uint8_t& lowRegister)
+void CPU::LXI(uint16_t& regPair)
+{
+	/*	No flags are affected
+	*	(BC, DE, HL) => {HIGH, LOW}
+	*	1st fetch => Low byte
+	*	2nd fetch => High byte
+	*/
+	regPair = fetch();
+	regPair = (((uint16_t)fetch()) << 8) | regPair;
+}
+void CPU::STAX(uint16_t& regPair)
 {
 	/*	No flags are affected
 	*	(BC, DE, HL) => {HIGH, LOW}
 	*/
-	lowRegister = fetch();
-	highRegister = fetch();
+	m_mem[regPair] = REG_A;
 }
-void CPU::STAX(uint8_t& highRegister, uint8_t& lowRegister)
-{
-	/*	No flags are affected
-	*	(BC, DE, HL) => {HIGH, LOW}
-	*/
-	m_mem[((uint16_t)highRegister << 8) | lowRegister] = REG_A;
-}
-void CPU::INX(uint8_t& highRegister, uint8_t& lowRegister)
+void CPU::INX(uint16_t& regPair)
 {
 	/*
 	* Increments register pair
@@ -348,10 +353,7 @@ void CPU::INX(uint8_t& highRegister, uint8_t& lowRegister)
 	* X Indicates, register pair;
 	* (BC, DE, HL) => (HIGH-LOW)
 	*/
-	uint16_t temp = ((uint16_t)highRegister << 8 | lowRegister);
-	temp += 1;
-	highRegister = (temp & 0xFF00) >> 8;
-	lowRegister = temp & 0x00FF;
+	regPair += 1;
 }
 void CPU::INR(uint8_t& reg)
 {
@@ -369,7 +371,7 @@ void CPU::INR(uint8_t& reg)
 	SetSingleFlag(ParityFlag, Parity(reg));
 	SetSingleFlag(AuxCarryFlag, (reg & 0x0F) == 0x00);
 }
-void CPU::DCX(uint8_t& highRegister, uint8_t& lowRegister)
+void CPU::DCX(uint16_t& regPair)
 {
 	/*
 	* Decrementss register pair
@@ -377,11 +379,8 @@ void CPU::DCX(uint8_t& highRegister, uint8_t& lowRegister)
 	* X Indicates, register pair;
 	* (BC, DE, HL) => (HIGH-LOW)
 	*/
-	uint16_t temp = 0;
-	temp = ((uint16_t)highRegister << 8 | lowRegister);
-	temp -= 1;
-	REG_B = (highRegister & 0xFF00) >> 8;
-	REG_C = lowRegister & 0x00FF;
+
+	regPair -= 1;
 }
 void CPU::DCR(uint8_t& reg)
 {
@@ -459,9 +458,9 @@ void CPU::JMP_CONDITIONAL(bool toJump)
 	//SET PC to the jmp address
 	m_regc.PC = jmpaddr;
 }
-void CPU::LDAX(uint8_t& highRegister, uint8_t& lowRegister)
+void CPU::LDAX(uint16_t& regPair)
 {
-	REG_A = m_mem[((uint16_t)highRegister << 8) | lowRegister];
+	REG_A = m_mem[regPair];
 }
 
 bool CPU::Parity(uint8_t num)
