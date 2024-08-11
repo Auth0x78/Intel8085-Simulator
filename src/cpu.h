@@ -11,6 +11,29 @@
 
 
 /*
+* Rules for flag affection are:
+* 
+* Sign Flag (S):
+*	It is set if the result of the addition is negative (i.e., if the most significant bit of the result is 1).
+*	Cleared if the result is positive (i.e., if the most significant bit is 0).
+*
+* Zero Flag (Z):
+*	It is set if the result of the addition is zero.
+*	Cleared if the result is non-zero.
+*
+* Auxiliary Carry Flag (AC):
+*	It is set if there is a carry out from the lower nibble (i.e., from bit 3 to bit 4) during the addition.
+*	Cleared if there is no carry from bit 3 to bit 4.
+
+* Parity Flag (P):
+*	It is set if the result has an even number of 1s (even parity).
+*	Cleared if the result has an odd number of 1s (odd parity).
+* Carry Flag (CY):
+*	It is set if there is a carry out from the most significant bit (i.e., from bit 7) during the addition.
+*	Cleared if there is no carry out from bit 7.
+*/
+
+/*
 * Instructions and data are in little endian format
 * Register in a 8085 were:
 *	Register	  Size		SSS/DDD
@@ -103,6 +126,7 @@ private:
 
 	//Opcode Functions
 	void			MOV						();
+	void			ADC						(uint8_t& reg);
 	void			LXI						(uint16_t& regPair);
 	void			STAX					(uint16_t& regPair);
 	void			INX						(uint16_t& regPair);

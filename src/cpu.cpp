@@ -48,6 +48,7 @@ void CPU::Init()
 	m_opcodeMap[0x01] = [=]() { LXI(REGX_BC); }; 
 	m_opcodeMap[0x11] = [=]() { LXI(REGX_DE); };
 	m_opcodeMap[0x21] = [=]() { LXI(REGX_HL); };
+	
 	//LXI SP
 	m_opcodeMap[0x31] = [=]() {
 		m_regc.SP = fetch();
@@ -111,6 +112,18 @@ void CPU::Init()
 		else
 			m_opcodeMap[i] = [=]() { MOV(); };
 	}
+	
+	// ADC OP
+	m_opcodeMap[0x88] = [=]() {	ADC(REG_B); };
+	m_opcodeMap[0x89] = [=]() {	ADC(REG_C); };
+	m_opcodeMap[0x8A] = [=]() {	ADC(REG_D); };
+	m_opcodeMap[0x8B] = [=]() {	ADC(REG_E); };
+	m_opcodeMap[0x8C] = [=]() {	ADC(REG_H); };
+	m_opcodeMap[0x8D] = [=]() {	ADC(REG_L); };
+	m_opcodeMap[0x8F] = [=]() {	ADC(REG_A); };
+	
+	// ADC M
+	m_opcodeMap[0x8E] = [=]() {	ADC(m_mem[PTR_M]); };
 
 	//CMP OPERATION
 	m_opcodeMap[0xBF] = [=]() { CMP(REG_A); };
@@ -327,6 +340,19 @@ void CPU::MOV()
 			REG_A = Src;
 			break;
 	}
+}
+void CPU::ADC(uint8_t& reg)
+{
+	uint16_t carry = CheckFlag(FlagType::CarryFlag) ? 1 : 0;
+	uint16_t result = REG_A + reg + carry;
+
+	SetSingleFlag(FlagType::SignFlag, REG_A & 0b10000000 != 0);
+	SetSingleFlag(FlagType::ZeroFlag, REG_A == 0);
+	SetSingleFlag(FlagType::AuxCarryFlag, ((REG_A & 0x0F) + (reg & 0x0F) + carry) > 0x0F);
+	SetSingleFlag(FlagType::ParityFlag, Parity(REG_A));
+	SetSingleFlag(FlagType::CarryFlag, result > 0xFF);
+
+	REG_A = result & 0xFF;
 }
 void CPU::LXI(uint16_t& regPair)
 {
