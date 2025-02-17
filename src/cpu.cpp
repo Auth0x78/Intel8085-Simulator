@@ -30,9 +30,9 @@ void CPU::Init()
 	m_regc.H = 0;
 	m_regc.L = 0;
 	m_regc.FLAG = 0;
-	//As we have a 8KB memory we take the last 1KB of memory as stack;
-	//Allocate 1KB Stack for a program
-	//As stack grows from larger memory address to lower memory address
+	// As we have a 8KB memory we take the last 1KB of memory as stack;
+	// Allocate 1KB Stack for a program
+	// As stack grows from larger memory address to lower memory address
 	m_regc.SP = (MEMORY_IN_BYTE - 1);
 	m_regc.PC = 0;
 	
@@ -112,7 +112,10 @@ void CPU::Init()
 		else
 			m_opcodeMap[i] = [=]() { MOV(); };
 	}
-	
+
+	// ACI data
+	m_opcodeMap[0xCE] = [=]() { ACI(); };
+
 	// ADC OP
 	m_opcodeMap[0x88] = [=]() {	ADC(REG_B); };
 	m_opcodeMap[0x89] = [=]() {	ADC(REG_C); };
@@ -124,6 +127,21 @@ void CPU::Init()
 	
 	// ADC M
 	m_opcodeMap[0x8E] = [=]() {	ADC(m_mem[PTR_M]); };
+
+	// ADD OP
+	m_opcodeMap[0x80] = [=]() { ADD(REG_B); };
+	m_opcodeMap[0x81] = [=]() { ADD(REG_C); };
+	m_opcodeMap[0x82] = [=]() { ADD(REG_D); };
+	m_opcodeMap[0x83] = [=]() { ADD(REG_E); };
+	m_opcodeMap[0x84] = [=]() { ADD(REG_H); };
+	m_opcodeMap[0x85] = [=]() { ADD(REG_L); };
+	m_opcodeMap[0x87] = [=]() { ADD(REG_A); };
+
+	// ADD M
+	m_opcodeMap[0x86] = [=]() { ADD(m_mem[PTR_M]); };
+	
+	// ADI data
+	m_opcodeMap[0xC6] = [=]() { ADI(); };
 
 	//CMP OPERATION
 	m_opcodeMap[0xBF] = [=]() { CMP(REG_A); };
@@ -139,6 +157,7 @@ void CPU::Init()
 	m_opcodeMap[0xC1] = [=]() { POP(REG_B, REG_C); };
 	m_opcodeMap[0xD1] = [=]() { POP(REG_D, REG_E); };
 	m_opcodeMap[0xE1] = [=]() { POP(REG_H, REG_L); };
+	
 	//POP PSW
 	m_opcodeMap[0xF1] = [=]() { POP(REG_A, m_regc.FLAG); };
 
@@ -146,6 +165,7 @@ void CPU::Init()
 	m_opcodeMap[0xC5] = [=]() { PUSH(REG_B, REG_C); };
 	m_opcodeMap[0xD5] = [=]() { PUSH(REG_D, REG_E); };
 	m_opcodeMap[0xE5] = [=]() { PUSH(REG_H, REG_L); };
+	
 	//PUSH PSW
 	m_opcodeMap[0xF5] = [=]() { PUSH(REG_A, m_regc.FLAG); };
 
@@ -202,7 +222,7 @@ CPU::CPU(uint8_t* instructions, size_t SizeInByte)
 		Logger::Log(Error, "Program occupying more memory than available!");
 		exit(EXIT_FAILURE);
 	}
-	//Copy the contents of instructions into memory starting from 0
+	// Copy the contents of instructions into memory starting from 0
 	memcpy_s(m_mem._ram, MEMORY_IN_BYTE, instructions, SizeInByte);
 
 	Init();
@@ -346,17 +366,48 @@ void CPU::ADC(uint8_t& reg)
 	uint16_t carry = CheckFlag(FlagType::CarryFlag) ? 1 : 0;
 	uint16_t result = REG_A + reg + carry;
 
-	SetSingleFlag(FlagType::SignFlag, REG_A & 0b10000000 != 0);
-	SetSingleFlag(FlagType::ZeroFlag, REG_A == 0);
+	UpdateArithFlags(result);
 	SetSingleFlag(FlagType::AuxCarryFlag, ((REG_A & 0x0F) + (reg & 0x0F) + carry) > 0x0F);
-	SetSingleFlag(FlagType::ParityFlag, Parity(REG_A));
-	SetSingleFlag(FlagType::CarryFlag, result > 0xFF);
 
 	REG_A = result & 0xFF;
 }
+void CPU::ADD(uint8_t& reg)
+{
+	uint16_t result = REG_A + reg;
+
+	UpdateArithFlags(result);
+	SetSingleFlag(FlagType::AuxCarryFlag, ((REG_A & 0x0F) + (reg & 0x0F)) > 0x0F);
+
+	REG_A = result & 0xFF;
+}
+
+void CPU::ACI()
+{
+	uint8_t data = fetch();
+	uint16_t carry = CheckFlag(FlagType::CarryFlag) ? 1 : 0;
+	uint16_t result = REG_A + data + carry;
+
+	UpdateArithFlags(result);
+	SetSingleFlag(FlagType::AuxCarryFlag, (REG_A & 0xf) + (data & 0xf) + carry > 0xf);
+
+	REG_A = result & 0xFF;
+}
+
+void CPU::ADI()
+{
+	uint8_t data = fetch();
+	uint16_t result = REG_A + data;
+
+	UpdateArithFlags(result);
+	SetSingleFlag(FlagType::AuxCarryFlag, ((REG_A & 0x0F) + (data & 0x0F)) > 0x0F);
+
+	REG_A = result & 0xFF;
+}
+
 void CPU::LXI(uint16_t& regPair)
 {
-	/*	No flags are affected
+	/*	
+	*	No flags are affected
 	*	(BC, DE, HL) => {HIGH, LOW}
 	*	1st fetch => Low byte
 	*	2nd fetch => High byte
@@ -364,6 +415,7 @@ void CPU::LXI(uint16_t& regPair)
 	regPair = fetch();
 	regPair = (((uint16_t)fetch()) << 8) | regPair;
 }
+
 void CPU::STAX(uint16_t& regPair)
 {
 	/*	No flags are affected
@@ -371,6 +423,7 @@ void CPU::STAX(uint16_t& regPair)
 	*/
 	m_mem[regPair] = REG_A;
 }
+
 void CPU::INX(uint16_t& regPair)
 {
 	/*
@@ -381,6 +434,7 @@ void CPU::INX(uint16_t& regPair)
 	*/
 	regPair += 1;
 }
+
 void CPU::INR(uint8_t& reg)
 {
 	/*
@@ -389,18 +443,29 @@ void CPU::INR(uint8_t& reg)
 	* S: if result's msb is 1
 	* P: if even bits in result
 	*/
-	reg += 1;
-
-	//Set all the necessary flags accordinly
-	SetSingleFlag(ZeroFlag, 0 == reg);
-	SetSingleFlag(SignFlag, (0x80 == (reg & 0x80)));
-	SetSingleFlag(ParityFlag, Parity(reg));
-	SetSingleFlag(AuxCarryFlag, (reg & 0x0F) == 0x00);
+	uint8_t result = reg + 1;
+		
+	//Set all the necessary flags accordingly
+	UpdateArithFlags(reg, false);
+	SetSingleFlag(FlagType::AuxCarryFlag, ((reg & 0x0F) + 0x01) > 0x0F);
+	
+	reg = result;
 }
+
+void CPU::SUB(uint8_t& reg)
+{
+	uint16_t result = REG_A - reg;
+
+	UpdateArithFlags(result);
+	SetSingleFlag(FlagType::AuxCarryFlag, (REG_A & 0x0F) + ((~reg + 1) & 0xf) > 0x0F);
+
+	REG_A = result & 0xFF;
+}
+
 void CPU::DCX(uint16_t& regPair)
 {
 	/*
-	* Decrementss register pair
+	* Decrements register pair
 	* Does not affect any flags
 	* X Indicates, register pair;
 	* (BC, DE, HL) => (HIGH-LOW)
@@ -408,21 +473,22 @@ void CPU::DCX(uint16_t& regPair)
 
 	regPair -= 1;
 }
+
 void CPU::DCR(uint8_t& reg)
 {
-	reg -= 1;
+	uint8_t result = reg - 1;
 
-	//Set all the necessary flags accordinly
-	SetSingleFlag(ZeroFlag, 0 == reg);
-	SetSingleFlag(SignFlag, (0x80 == (reg & 0x80)));
-	SetSingleFlag(ParityFlag, Parity(reg));
+	//Set all the necessary flags accordingly
+	UpdateArithFlags(reg, false);
+	SetSingleFlag(FlagType::AuxCarryFlag, (reg & 0x0F) + ((~1 + 1) & 0xf) > 0x0F);
 	
-	SetSingleFlag(AuxCarryFlag, ((reg & 0x0F) < 1));
+	reg = result;
 }
 void CPU::MVI(uint8_t& reg)
 {
 	reg = fetch();
 }
+
 void CPU::CMP(uint8_t& reg)
 {
 	//Compares reg with A
@@ -435,13 +501,11 @@ void CPU::CMP(uint8_t& reg)
 	* Aux: Borrow from bit 3 to bit 4 during sub
 	*/
 	uint8_t sub_result = REG_A - reg;
-	
-	SetSingleFlag(ZeroFlag, 0 == sub_result);
-	SetSingleFlag(SignFlag, (0x80 == (sub_result & 0x80)) );
-	SetSingleFlag(ParityFlag, Parity(sub_result));
-	SetSingleFlag(AuxCarryFlag, ((REG_A & 0x0F) < (reg & 0x0F)) );
-	SetSingleFlag(CarryFlag, REG_A < reg);
+
+	SetSingleFlag(AuxCarryFlag, (REG_A & 0xf) + ((~reg + 1) & 0xf) > 0xf);
+	UpdateArithFlags(sub_result);
 }
+
 void CPU::PUSH(uint8_t& highRegister, uint8_t& lowRegister)
 {
 	/*
@@ -456,6 +520,7 @@ void CPU::PUSH(uint8_t& highRegister, uint8_t& lowRegister)
 	m_mem[--m_regc.SP] = highRegister; // PUSH HIGHER byte
 	m_mem[--m_regc.SP] = lowRegister; //PUSH LOWER byte
 }
+
 void CPU::POP(uint8_t& highRegister, uint8_t& lowRegister)
 {
 	/*
@@ -468,6 +533,7 @@ void CPU::POP(uint8_t& highRegister, uint8_t& lowRegister)
 	lowRegister = m_mem[m_regc.SP++];
 	highRegister = m_mem[m_regc.SP++];
 }
+
 void CPU::JMP_CONDITIONAL(bool toJump)
 {
 	/*
@@ -484,6 +550,9 @@ void CPU::JMP_CONDITIONAL(bool toJump)
 	//SET PC to the jmp address
 	m_regc.PC = jmpaddr;
 }
+
+
+
 void CPU::LDAX(uint16_t& regPair)
 {
 	REG_A = m_mem[regPair];
@@ -500,6 +569,18 @@ bool CPU::Parity(uint8_t num)
 	}
 	return ((p & 0x1) == 0);
 }
+
+void CPU::UpdateArithFlags(uint16_t res, bool updateCarry = true)
+{
+	SetSingleFlag(FlagType::SignFlag, (res & 0x80) == 0x80);
+	SetSingleFlag(FlagType::ZeroFlag, (res & 0xFF) == 0);
+	SetSingleFlag(FlagType::AuxCarryFlag, ((REG_A & 0x0F) - (res & 0x0F)) > 0x0F);
+	SetSingleFlag(FlagType::ParityFlag, Parity(REG_A));
+
+	if(updateCarry)
+		SetSingleFlag(FlagType::CarryFlag, res > 0xff);
+}
+
 void CPU::Not_Implemented()
 {
 	Logger::Log(Error, "Opcode "+ std::to_string(m_currentInstr) + " not implemented!");
@@ -510,14 +591,17 @@ inline bool CPU::CheckFlag(FlagType ftype)
 {
 	return (m_regc.FLAG & (uint8_t)ftype) != 0;
 }
+
 uint8_t& CPU::GetReferenceToFlags()
 {
 	return m_regc.FLAG;
 }
+
 void CPU::SetAllFlags(uint8_t byte)
 {
 	m_regc.FLAG = byte;
 }
+
 void CPU::SetSingleFlag(FlagType ftype, bool _set)
 {
 	if (_set)

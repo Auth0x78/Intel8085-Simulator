@@ -25,10 +25,11 @@
 * Auxiliary Carry Flag (AC):
 *	It is set if there is a carry out from the lower nibble (i.e., from bit 3 to bit 4) during the addition.
 *	Cleared if there is no carry from bit 3 to bit 4.
-
+* 
 * Parity Flag (P):
 *	It is set if the result has an even number of 1s (even parity).
 *	Cleared if the result has an odd number of 1s (odd parity).
+* 
 * Carry Flag (CY):
 *	It is set if there is a carry out from the most significant bit (i.e., from bit 7) during the addition.
 *	Cleared if there is no carry out from bit 7.
@@ -128,6 +129,9 @@ private:
 	//Opcode Functions
 	void			MOV						();
 	void			ADC						(uint8_t& reg);
+	void			ADD						(uint8_t& reg);
+	void			ACI						();
+	void			ADI						();
 	void			LXI						(uint16_t& regPair);
 	void			STAX					(uint16_t& regPair);
 	void			INX						(uint16_t& regPair);
@@ -137,13 +141,15 @@ private:
 	void			CMP						(uint8_t& reg);
 	void			PUSH					(uint8_t& highRegister, uint8_t& lowRegister);
 	void			POP						(uint8_t& highRegister, uint8_t& lowRegister);
+	void			SUB						(uint8_t& reg);
 	void			DCX						(uint16_t& regPair);
 	void			LDAX					(uint16_t& regPair);
 	void			JMP_CONDITIONAL			(bool toJump);
-
+	
 
 	//MISC.
 	bool			Parity					(uint8_t reg);
+	void			UpdateArithFlags		(uint16_t reg, bool updateCarry);
 
 
 	//CPU STATE Variables

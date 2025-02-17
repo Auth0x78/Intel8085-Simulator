@@ -8,7 +8,7 @@ memory::memory()
 
 uint8_t& memory::operator[](uint16_t location)
 {
-	if (location < MEMORY_IN_BYTE)
+	if (location < MEMORY_IN_BYTE && location >= 0)
 		return _ram[location];
 	else
 	{
