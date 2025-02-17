@@ -500,10 +500,11 @@ void CPU::CMP(uint8_t& reg)
 	* P: If even bits in result
 	* Aux: Borrow from bit 3 to bit 4 during sub
 	*/
+
 	uint8_t sub_result = REG_A - reg;
 
-	SetSingleFlag(AuxCarryFlag, (REG_A & 0xf) + ((~reg + 1) & 0xf) > 0xf);
 	UpdateArithFlags(sub_result);
+	SetSingleFlag(AuxCarryFlag, (REG_A & 0xf) + ((~reg + 1) & 0xf) > 0xf);
 }
 
 void CPU::PUSH(uint8_t& highRegister, uint8_t& lowRegister)
